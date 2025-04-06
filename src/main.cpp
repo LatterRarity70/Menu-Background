@@ -374,7 +374,7 @@ class $modify(AddMenuGameLayerExt, CCSprite) {
                     auto fuuuuck = new MenuGameLayer();
                     if (fuuuuck && fuuuuck->MenuGameLayer::init()) {
                         fuuuuck->autorelease();
-                        a->insertAfter(MenuGameLayer::create(), rtn);
+                        a->insertAfter(fuuuuck, rtn);
                     }
                     else CC_SAFE_DELETE(fuuuuck);
                 }
