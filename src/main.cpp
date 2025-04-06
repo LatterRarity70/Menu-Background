@@ -367,8 +367,7 @@ public:
 class $modify(AddMenuGameLayerExt, CCSprite) {
     static CCSprite* create(const char* pszFileName) {
         auto rtn = CCSprite::create(pszFileName);
-        //ssorry alpha 
-        if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
+        if (SETTING(bool, "OVERLAP_ALLGRADBG")) if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
             [rtn] {
                 if (auto a = rtn->getParent()) a->insertAfter(MenuGameLayer::create(), rtn);
             }
