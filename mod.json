@@ -1,0 +1,131 @@
+{
+  "geode": "4.3.1",
+  "gd": {
+    "win": "2.2074",
+    "android": "2.2074",
+    "mac": "2.2074",
+    "ios": "2.2074"
+  },
+  "version": "1.0.0",
+  "id": "user95401.main-menu-background",
+  "name": "Main Menu Background",
+  "developers": [ "user95401" ],
+  "description": "My background menu mod with support for GIFs and other extra stuff.",
+  "tags": [ "interface", "utility" ],
+  "links": {
+    "community": "https://discord.gg/6SxAbk3bTA",
+    "homepage": "https://t.me/user95401_channel",
+    "source": "https://github.com/user95401/Menu-Background"
+  },
+  "settings": {
+    "SETUP_MODE": {
+      "name": "Setup Mode",
+      "description": "Adds control ui to main menu.",
+      "type": "bool",
+      "default": false
+    },
+    "SETUP_WINDOW_SCALE": {
+      "name": "Setup Window Scale",
+      "type": "float",
+      "default": 1,
+      "min": 0.1,
+      "max": 10.0
+    },
+    "OVERLAP_ALLGRADBG": {
+      "name": "Add to layers with gradiend bg",
+      "description": "Add MenuGameLayer to all layers that have gradient bg.",
+      "type": "bool",
+      "default": false
+    },
+    "BACKGROUND_FILE": {
+      "type": "file",
+      "name": "Background image file",
+      "default": "background.png",
+      "control": {
+        "filters": [
+          {
+            "files": [ "*.png", "*.jpg", "*.gif" ],
+            "description": "Static image or animated gif file"
+          },
+          {
+            "files": [ "*.gif" ],
+            "description": "Static animated gif file"
+          },
+          {
+            "files": [ "*.png", "*.jpg" ],
+            "description": "Static image file"
+          }
+        ]
+      }
+    },
+    "ASYNC_GIF_PARSING": {
+      "name": "GIF Asynchronous Parsing",
+      "description": "no lag but takes a while to appear of first frame. \nbtw u can put same/path/same_name.gif.png as first frame or preview",
+      "type": "bool",
+      "default": false
+    },
+    "FORCE_BACKGROUND_ID": {
+      "name": "Force Game Background ID",
+      "type": "int",
+      "default": 0,
+      "max": 100
+    },
+    "FORCE_GROUND_ID": {
+      "name": "Force Game Ground ID",
+      "type": "int",
+      "default": 0,
+      "max": 100
+    },
+    "HIDE_GAME": {
+      "name": "Hide Game",
+      "description": "overlap by black layer.",
+      "type": "bool",
+      "default": false
+    },
+    "HIDE_GROUND": {
+      "name": "Hide Ground",
+      "type": "bool",
+      "default": false
+    },
+    "BG_ZORDER": {
+      "name": "BG z-Order",
+      "type": "int",
+      "default": 11,
+      "min": -99
+    },
+    "BG_SCALE_TYPE": {
+      "type": "string",
+      "name": "Scale",
+      "default": "Fullscreen Stretch",
+      "one-of": [ "Fullscreen Stretch", "Up to WinHeight", "Up to WinWidth", "Up to WinSize", "NONE" ]
+    },
+    "BG_SCALEX": {
+      "name": "BG ScaleX",
+      "type": "float",
+      "default": 0,
+      "min": -10.0,
+      "max": 10.0
+    },
+    "BG_SCALEY": {
+      "name": "BG ScaleY",
+      "type": "float",
+      "default": 0,
+      "min": -10.0,
+      "max": 10.0
+    },
+    "BG_POSX": {
+      "name": "BG PosX",
+      "type": "float",
+      "default": 0,
+      "min": -500.0,
+      "max": 500.0
+    },
+    "BG_POSY": {
+      "name": "BG PosY",
+      "type": "float",
+      "default": 0,
+      "min": -500.0,
+      "max": 500.0
+    }
+  }
+}
