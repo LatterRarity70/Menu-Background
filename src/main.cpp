@@ -60,7 +60,7 @@ public:
                     if (sprite) {
                         sprite->setPosition({ size.width * 0.5f, size.height * 0.5f });
                         sprite->setID("sprite"_spr);
-                        sprite->runAction(CCRepeatForever::create(CCSpawn::create(CCShow::create(), nullptr)));
+                        sprite->runAction(CCRepeatForever::create(CCSpawn::create(CallFuncExt::create([sprite] {sprite->setVisible(1); }), nullptr)));
                         scroll->m_contentLayer->addChild(sprite);
                     };
                 };
