@@ -369,7 +369,15 @@ class $modify(AddMenuGameLayerExt, CCSprite) {
         auto rtn = CCSprite::create(pszFileName);
         if (SETTING(bool, "OVERLAP_ALLGRADBG")) if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
             [rtn] {
-                if (auto a = rtn->getParent()) a->insertAfter(MenuGameLayer::create(), rtn);
+                if (auto a = rtn->getParent()) {
+                    //missing macos bindings moment
+                    auto fuuuuck = new MenuGameLayer();
+                    if (fuuuuck && fuuuuck->MenuGameLayer::init()) {
+                        fuuuuck->autorelease();
+                        a->insertAfter(MenuGameLayer::create(), rtn);
+                    }
+                    else CC_SAFE_DELETE(fuuuuck);
+                }
             }
         );
         return rtn;
