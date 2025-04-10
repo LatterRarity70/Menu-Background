@@ -1,6 +1,6 @@
 # Support
 
-Thank you for using my mod! I don't accept any donations, but your support means a lot to me. Here’s how you can help:
+Thank you for using my mod! I don't accept any donations, but your support means a lot to me. Here is how you can help:
 
 #### - Stay active on my [GitHub](https://github.com/user95401) by giving stars, creating issues, forking, or contributing to the projects.
 
