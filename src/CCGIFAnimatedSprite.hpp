@@ -1,4 +1,4 @@
-#include "Geode/Geode.hpp"
+#include <Geode/Geode.hpp>
 #include <gif_lib.h>
 
 using namespace geode::prelude;
@@ -74,7 +74,6 @@ public:
                         {
                             CCTexture2D* texture = new CCTexture2D();
                             if (texture->initWithData(canvasCopy.data(), kCCTexture2DPixelFormat_RGBA8888, width, height, CCSizeMake(width, height))) {
-                                texture->retain();
                                 GifFrame frame;
                                 frame.texture = texture;
                                 frame.delay = delay;
@@ -112,8 +111,7 @@ public:
             return false;
         }
 
-        auto prew = (gifFile + ".png");
-        if (auto a = CCSprite::create(prew.c_str())->displayFrame()) this->setDisplayFrame(a);
+        if (auto a = CCSprite::create(gifFile.c_str())->displayFrame()) this->setDisplayFrame(a);
 
         m_currentFrame = 0;
         m_elapsedTime = 0.0f;
@@ -135,7 +133,7 @@ public:
 
     virtual void update(float dt) override {
 
-        if (m_frames.empty()) return;
+        if (m_frames.size() < 2) return;
 
         m_elapsedTime += dt;
         if (m_elapsedTime >= m_frameDelays[m_currentFrame]) {

@@ -1,5 +1,5 @@
-#include "Geode/Geode.hpp"
-#include "Geode/ui/GeodeUI.hpp"
+#include <Geode/Geode.hpp>
+#include <Geode/ui/GeodeUI.hpp>
 #include "CCGIFAnimatedSprite.hpp" // Include your CCGIFAnimatedSprite header
 
 using namespace geode::prelude;
@@ -33,10 +33,13 @@ public:
 
         auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
 
-        CCNodeRGBA* inital_sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
-        inital_sprite = inital_sprite->getUserObject(
-            "geode.texture-loader/fallback"
-        ) ? CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING")) : inital_sprite;
+        CCNodeRGBA* inital_sprite;
+        if (SETTING(std::filesystem::path, "BACKGROUND_FILE").extension() == ".gif") {
+            inital_sprite = CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING"));
+        }
+        else {
+            inital_sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
+        }
 
         if (inital_sprite) {
 
@@ -52,11 +55,15 @@ public:
                 {
                     scroll->m_contentLayer->removeChildByID("sprite"_spr);
                     auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
-                    sprite = sprite ? sprite : CCSprite::create((const char*)BACKGROUND_FILE.c_str());
-                    sprite = sprite->getUserObject(
-                        "geode.texture-loader/fallback"
-                    ) ? CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING")) : sprite;
-                    sprite = sprite ? sprite : SimpleTextArea::create("FAILED TO LOAD IMAGE")->getLines()[1];
+                    if (!sprite) {
+                        if (SETTING(std::filesystem::path, "BACKGROUND_FILE").extension() == ".gif") {
+                            sprite = CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING"));
+                        }
+                        else {
+                            sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
+                        }
+                    }
+                    sprite = sprite ? sprite : CCLabelBMFont::create("FAILED TO LOAD IMAGE", "bigFont.fnt");
                     if (sprite) {
                         sprite->setPosition({ size.width * 0.5f, size.height * 0.5f });
                         sprite->setID("sprite"_spr);
@@ -368,15 +375,9 @@ class $modify(AddMenuGameLayerExt, CCSprite) {
     static CCSprite* create(const char* pszFileName) {
         auto rtn = CCSprite::create(pszFileName);
         if (SETTING(bool, "OVERLAP_ALLGRADBG")) if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
-            [rtn] {
+            [rtn = Ref(rtn)] {
                 if (auto a = rtn->getParent()) {
-                    //missing macos bindings moment
-                    auto fuuuuck = new MenuGameLayer();
-                    if (fuuuuck && fuuuuck->MenuGameLayer::init()) {
-                        fuuuuck->autorelease();
-                        a->insertAfter(fuuuuck, rtn);
-                    }
-                    else CC_SAFE_DELETE(fuuuuck);
+                    a->insertAfter(MenuGameLayer::create(), rtn);
                 }
             }
         );
