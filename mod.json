@@ -6,7 +6,7 @@
     "mac": "2.2074",
     "ios": "2.2074"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "id": "user95401.main-menu-background",
   "name": "Main Menu Background",
   "developers": [ "user95401" ],
@@ -42,6 +42,7 @@
       "name": "Background image file",
       "default": "background.png",
       "control": {
+        "dialog": "open",
         "filters": [
           {
             "files": [ "*.png", "*.jpg", "*.gif" ],

@@ -377,7 +377,9 @@ class $modify(AddMenuGameLayerExt, CCSprite) {
         if (SETTING(bool, "OVERLAP_ALLGRADBG")) if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
             [rtn = Ref(rtn)] {
                 if (auto a = rtn->getParent()) {
-                    a->insertAfter(MenuGameLayer::create(), rtn);
+                    auto game = MenuGameLayer::create();
+                    game->setTouchEnabled(0);
+                    a->insertAfter(game, rtn);
                 }
             }
         );

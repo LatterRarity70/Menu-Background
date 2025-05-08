@@ -1,3 +1,6 @@
+# 1.0.4
+- disable touches for gradbg overlap (fix taps overtake by bg)
+
 # 1.0.3
 - SDK 4.4.0
 - Memory leak fix and other code improvements by [hiimjasmine00](https://github.com/hiimjasmine00)
