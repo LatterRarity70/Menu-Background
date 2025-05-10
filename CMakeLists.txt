@@ -8,13 +8,9 @@ else()
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(Main)
+project(main)
 
-# Set up the mod binary
-add_library(${PROJECT_NAME} SHARED
-    src/main.cpp
-    # Add any extra C++ source files here
-)
+add_library(${PROJECT_NAME} SHARED src/main.cpp)
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")
@@ -26,9 +22,3 @@ add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 # Set up dependencies, resources, and link Geode.
 setup_geode_mod(${PROJECT_NAME})
-
-# Add giflib...
-include_directories(src/giflib)
-file(GLOB_RECURSE giflib_src src/giflib/*.c*)
-add_library(giflib STATIC ${giflib_src})
-target_link_libraries(${PROJECT_NAME} giflib)

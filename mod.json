@@ -6,7 +6,7 @@
     "mac": "2.2074",
     "ios": "2.2074"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "id": "user95401.main-menu-background",
   "name": "Main Menu Background",
   "developers": [ "user95401" ],
@@ -16,6 +16,12 @@
     "community": "https://discord.gg/6SxAbk3bTA",
     "homepage": "https://t.me/user95401_channel",
     "source": "https://github.com/user95401/Menu-Background"
+  },
+  "dependencies": {
+    "user95401.gif-sprites": {
+      "version": ">=v1.0.0",
+      "importance": "recommended"
+    }
   },
   "settings": {
     "SETUP_MODE": {
@@ -58,12 +64,6 @@
           }
         ]
       }
-    },
-    "ASYNC_GIF_PARSING": {
-      "name": "GIF Asynchronous Parsing",
-      "description": "no lag but takes a while to appear of first frame. \nbtw u can put same/path/same_name.gif.png as first frame or preview",
-      "type": "bool",
-      "default": false
     },
     "FORCE_BACKGROUND_ID": {
       "name": "Force Game Background ID",

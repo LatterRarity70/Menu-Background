@@ -1,3 +1,10 @@
+# 1.0.5
+- removed async gif parsing
+- bg file preload
+- gif caching
+- fixed bugs
+- gif loader moved to [user95401.gif-sprites](https://geode-sdk.org/mods/user95401.gif-sprites)
+
 # 1.0.4
 - disable touches for gradbg overlap (fix taps overtake by bg)
 

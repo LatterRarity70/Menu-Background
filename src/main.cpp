@@ -1,18 +1,27 @@
+
 #include <Geode/Geode.hpp>
 #include <Geode/ui/GeodeUI.hpp>
-#include "CCGIFAnimatedSprite.hpp" // Include your CCGIFAnimatedSprite header
 
 using namespace geode::prelude;
 
 #define SETTING(type, key_name) Mod::get()->getSettingValue<type>(key_name)
 
 $on_mod(Loaded) {
+
+    //more search paths
     auto search_paths = {
         getMod()->getConfigDir().string(),
         getMod()->getSaveDir().string(),
         getMod()->getTempDir().string()
     };
-    for (auto entry : search_paths) CCFileUtils::get()->addPriorityPath(entry.c_str());
+    for (auto entry : search_paths) CCFileUtils::get()->addPriorityPath(
+        entry.c_str()
+    );
+
+    //gif file preload
+    auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
+    CCSprite::create((const char*)BACKGROUND_FILE.c_str());
+
 }
 
 #include <Geode/modify/MenuGameLayer.hpp>
@@ -33,13 +42,7 @@ public:
 
         auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
 
-        CCNodeRGBA* inital_sprite;
-        if (SETTING(std::filesystem::path, "BACKGROUND_FILE").extension() == ".gif") {
-            inital_sprite = CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING"));
-        }
-        else {
-            inital_sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
-        }
+        CCNodeRGBA* inital_sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
 
         if (inital_sprite) {
 
@@ -55,14 +58,7 @@ public:
                 {
                     scroll->m_contentLayer->removeChildByID("sprite"_spr);
                     auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
-                    if (!sprite) {
-                        if (SETTING(std::filesystem::path, "BACKGROUND_FILE").extension() == ".gif") {
-                            sprite = CCGIFAnimatedSprite::create((const char*)BACKGROUND_FILE.c_str(), not SETTING(bool, "ASYNC_GIF_PARSING"));
-                        }
-                        else {
-                            sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
-                        }
-                    }
+                    if (!sprite) sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
                     sprite = sprite ? sprite : CCLabelBMFont::create("FAILED TO LOAD IMAGE", "bigFont.fnt");
                     if (sprite) {
                         sprite->setPosition({ size.width * 0.5f, size.height * 0.5f });
