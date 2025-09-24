@@ -74,6 +74,43 @@ public:
                         sprite->runAction(CCRepeatForever::create(CCSpawn::create(CallFuncExt::create([sprite] {sprite->setVisible(1); }), nullptr)));
                         parent->addChild(sprite);
                     };
+                    unsigned long aaw = 0u;
+                    if (!CCFileUtils::get()->getFileData(BACKGROUND_FILE.c_str(), "rb", &aaw)) {
+                        for (auto c : BACKGROUND_FILE) if (string::contains(
+                            R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!¹;%:?*()_+-=.,/|"'@#$^&{}[])"
+                            , c
+                        )) {
+                            queueInMainThread(
+                                [] {
+                                    auto e = createQuickPopup(
+                                        "Unexcepted characters!",
+                                        "Additional check detected unexcepted characters in file path...\nThis may be one of the problems. Please make sure that the file path does not have russian or any other special characters.",
+                                        "OK", nullptr, [](void*, bool) {}, false
+                                    );
+                                    auto scene = CCScene::get();
+                                    if (Ref trans = typeinfo_cast<CCTransitionScene*>(scene)) scene = trans->m_pInScene;
+                                    e->m_scene = scene;
+                                    e->show();
+                                    handleTouchPriority(e);
+                                }
+                            );
+                            break;
+                        }
+                        queueInMainThread(
+                            [] {
+                                auto e = createQuickPopup(
+                                    "Unreadable background file",
+                                    "Please select a valid background file",
+                                    "OK", nullptr, [](void*, bool) { openSettingsPopup(getMod()); }, false
+                                );
+                                auto scene = CCScene::get();
+                                if (Ref trans = typeinfo_cast<CCTransitionScene*>(scene)) scene = trans->m_pInScene;
+                                e->m_scene = scene;
+                                e->show();
+                                handleTouchPriority(e);
+                            }
+                        );
+                    }
                 };
 
             setupSprite(inital_sprite, scroll->m_contentLayer);
