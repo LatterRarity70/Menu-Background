@@ -143,7 +143,7 @@ public:
                         NextDraw = [=, ref = Ref(this)]() mutable
                             {
                                 ImGui::GetIO().FontAllowUserScaling = true;
-                                ImGui::GetIO().FontGlobalScale = 2.0f * SETTING(float, "SETUP_WINDOW_SCALE");
+                                ImGui::GetIO().FontGlobalScale = 2.28f * SETTING(float, "SETUP_WINDOW_SCALE");
                                 bool enabled = SETTING(bool, "SETUP_MODE_ENABLED");
                                 if (ImGui::Begin("Background Setup", &enabled, ImGuiWindowFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX)) {
                                     //if close button pressed the enabled bool is set to false
@@ -222,7 +222,6 @@ public:
                                         Mod::get()->setSettingValue("BG_SCALEX", s[0]);
 										Mod::get()->setSettingValue("BG_SCALEY", s[1]);
                                     };
-                                    ImGui::SetWindowSize(ImVec2(1, 1));
                                 }
                                 ImGui::End();
                             };
