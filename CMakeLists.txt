@@ -14,3 +14,6 @@ add_library(${PROJECT_NAME} SHARED src/main.cpp)
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 setup_geode_mod(${PROJECT_NAME})
+
+CPMAddPackage("gh:LatterRarity70/gd-imgui-cocos#geode")
+target_link_libraries(${PROJECT_NAME} imgui-cocos)

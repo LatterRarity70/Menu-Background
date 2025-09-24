@@ -1,12 +1,17 @@
-#include <Geode/ui/GeodeUI.hpp>
+#include <imgui-cocos.hpp>
+inline static auto NextDraw = geode::ScheduledFunction();
 
+#include <Geode/ui/GeodeUI.hpp>
 using namespace geode::prelude;
+class ModSettingsPopup : public Popup<Mod*> {};
 
 #define SETTING(type, key_name) Mod::get()->getSettingValue<type>(key_name)
 
-class ModSettingsPopup : public Popup<Mod*> {};
-
 $on_mod(Loaded) {
+    //imgui really
+    ImGuiCocos::get().setup();
+    ImGuiCocos::get().draw([] { if (NextDraw) NextDraw(); NextDraw = nullptr; });
+
     //more search paths
     auto search_paths = {
         getMod()->getConfigDir().string(),
@@ -48,28 +53,40 @@ public:
 
             auto size = this->getContentSize();
 
-            auto scroll = ScrollLayer::create(size);
+            Ref scroll = ScrollLayer::create(size);
             scroll->setID("background-layer"_spr);
 
             scroll->m_contentLayer->setPositionX(SETTING(float, "BG_POSX"));
             scroll->m_contentLayer->setPositionY(SETTING(float, "BG_POSY"));
 
-            auto setupSprite = [scroll, size](CCNode* sprite = nullptr)
-                {
-                    scroll->m_contentLayer->removeChildByID("sprite"_spr);
+            static std::function<void(CCNode*, CCNode*)> setupSprite = [](
+                Ref<CCNode> sprite, CCNode* parent
+                ) {
+                    if (!parent) return log::error("can't resolve content layer");
+                    while (Ref a = parent->getChildByID("sprite"_spr)) a->removeMeAndCleanup();
                     auto BACKGROUND_FILE = string::pathToString(SETTING(std::filesystem::path, "BACKGROUND_FILE"));
                     BACKGROUND_FILE = CCFileUtils::get()->fullPathForFilename(BACKGROUND_FILE.c_str(), 0).c_str();
-                    if (!sprite) sprite = CCSprite::create(BACKGROUND_FILE.c_str());
-                    sprite = sprite ? sprite : CCLabelBMFont::create("FAILED TO LOAD IMAGE", "bigFont.fnt");
+                    log::info("Creating sprite with {}", BACKGROUND_FILE);
+                    if (sprite and !sprite->isRunning()) sprite = CCSprite::create(BACKGROUND_FILE.c_str());
                     if (sprite) {
-                        sprite->setPosition({ size.width * 0.5f, size.height * 0.5f });
+                        sprite->setPosition(parent->getContentSize() * 0.5f);
                         sprite->setID("sprite"_spr);
                         sprite->runAction(CCRepeatForever::create(CCSpawn::create(CallFuncExt::create([sprite] {sprite->setVisible(1); }), nullptr)));
-                        scroll->m_contentLayer->addChild(sprite);
+                        parent->addChild(sprite);
                     };
                 };
 
-            setupSprite(inital_sprite);
+            setupSprite(inital_sprite, scroll->m_contentLayer);
+
+            static Ref<CCNode> listenerTarget;
+            static Ref<CCNode> listenerTarget2;
+            if (!listenerTarget) listenForSettingChanges(
+                "BACKGROUND_FILE", [](std::filesystem::path value) {
+                    setupSprite(listenerTarget, listenerTarget2);
+                }
+            );
+            listenerTarget = inital_sprite;
+            listenerTarget2 = scroll->m_contentLayer;
 
             scroll->m_disableHorizontal = 0;
             scroll->m_scrollLimitTop = 9999;
@@ -78,29 +95,29 @@ public:
 
             scroll->setMouseEnabled(SETTING(bool, "SETUP_MODE_ENABLED"));
 
-            auto scroll_bg = CCSprite::create("groundSquare_18_001.png");//geode::createLayerBG();
+            Ref scroll_bg = CCSprite::create("groundSquare_18_001.png");//geode::createLayerBG();
             scroll_bg->setScale(9999.f);
             scroll_bg->setColor(ccBLACK);
             scroll->setID("bg"_spr);
             scroll->addChild(scroll_bg, -1);
 
             scroll->runAction(CCRepeatForever::create(CCSpawn::create(CallFuncExt::create(
-                [scroll, scroll_bg, setupSprite, this] {
-                    auto content = scroll->m_contentLayer;
+                [scroll, scroll_bg, this] {
+                    Ref content = scroll->m_contentLayer;
 
                     scroll->m_disableMovement = not SETTING(bool, "SETUP_MODE_ENABLED");
                     scroll->setMouseEnabled(SETTING(bool, "SETUP_MODE_ENABLED"));
 
                     if (auto a = scroll->getChildByIDRecursive("menu_top_container"_spr)) a->setScale(SETTING(float, "SETUP_WINDOW_SCALE"));
 
-                    if (auto a = this->getChildByType<GJGroundLayer>(-1)) a->setVisible(SETTING(bool, "HIDE_GROUND"));
+                    if (auto a = this->getChildByType<GJGroundLayer>(-1)) a->setVisible(not SETTING(bool, "HIDE_GROUND"));
 
                     scroll_bg->setVisible(SETTING(bool, "HIDE_GAME"));
                     scroll->setZOrder(SETTING(bool, "HIDE_GAME") ? 999 : SETTING(int, "BG_ZORDER"));
 
                     if (auto a = SETTING(float, "BG_SCALEX")) content->setScaleX(a); else content->setScaleX(1.f);
                     if (auto a = SETTING(float, "BG_SCALEY")) content->setScaleY(a); else content->setScaleY(1.f);
-                    if (!(bool)SETTING(float, "BG_SCALEX") and !(bool)SETTING(float, "BG_SCALEY")) {
+                    if (!SETTING(float, "BG_SCALEX") and !SETTING(float, "BG_SCALEY")) {
                         auto sprite = content->getChildByID("sprite"_spr); 
                         sprite->setScale(1.f);
                         //"one-of": ["Fullscreen Stretch", "Up to WinHeight", "Up to WinWidth", "Up to WinSize", "NONE"]
@@ -115,36 +132,100 @@ public:
                     }
 
                     if (not SETTING(bool, "SETUP_MODE_ENABLED")) {
-
                         content->setPositionX(SETTING(float, "BG_POSX"));
                         content->setPositionY(SETTING(float, "BG_POSY"));
-
                     }
-                    else {
+                    else if (!scroll->m_touchDown and !CCScene::get()->getChildByType<ModSettingsPopup>(0)) {
 
                         Mod::get()->setSettingValue("BG_POSX", content->getPositionX());
                         Mod::get()->setSettingValue("BG_POSY", content->getPositionY());
 
-                        if (auto sc = CCScene::get()) if (sc->getChildByType<CCLayer>(0)) {
-                            static Ref<Popup<Mod*>> popup;
-                            if (!sc->getChildByType<ModSettingsPopup>(0)) popup = openSettingsPopup(
-                                getMod(), true //openSettingsPopup
-                            );
-                            else if (popup and popup->isRunning()) {
-                                popup->setOpacity(0);
-                                popup->setTouchEnabled(false);
-                                popup->setScale(SETTING(float, "SETUP_WINDOW_SCALE")); //SETUP_WINDOW_SCALE
-                                if (auto layer = popup->m_mainLayer) {
-                                    if (Ref a = layer->getChildByType<CCScale9Sprite>(-1)) {
-                                        a->setOpacity(125);
-                                        a->setColor(ccBLACK);
-                                    }
-                                    if (Ref a = layer->getChildByType<ListBorders>(-1)) {
-                                        a->setVisible(0);
-                                    }
+                        NextDraw = [=, ref = Ref(this)]() mutable
+                            {
+                                ImGui::GetIO().FontAllowUserScaling = true;
+                                ImGui::GetIO().FontGlobalScale = 2.0f * SETTING(float, "SETUP_WINDOW_SCALE");
+                                bool enabled = SETTING(bool, "SETUP_MODE_ENABLED");
+                                if (ImGui::Begin("Background Setup", &enabled, ImGuiWindowFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX)) {
+                                    //if close button pressed the enabled bool is set to false
+                                    if (!enabled) getMod()->setSettingValue("SETUP_MODE_ENABLED", false);
+                                    //btns
+                                    if (ImGui::Button(
+                                        ref->getPositionX() ? "Hide Menu" : "Show Menu"
+                                    )) if (Ref parent = ref->getParent()) {
+                                        if (ref->getPositionX()) {
+                                            parent->setPositionX(parent->getPositionX() - parent->getContentWidth() * 3);
+                                            ref->setPositionX(ref->getPositionX() + ref->getContentWidth() * 3);
+                                        }
+                                        else {
+                                            parent->setPositionX(parent->getContentWidth() * 3);
+                                            ref->setPositionX(ref->getContentWidth() * -3);
+                                        };
+                                    };
+                                    ImGui::SameLine();
+                                    ImGui::Button("Open Settings") ? openSettingsPopup(getMod()) : void();
+                                    ImGui::SameLine();
+                                    ImGui::Text("| Window Scale:");
+									ImGui::SameLine();
+									ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+									float windowscale = SETTING(float, "SETUP_WINDOW_SCALE");
+									ImGui::DragFloat("###windowscale", &windowscale, 0.05f, 0.5f) ? Mod::get()->setSettingValue(
+										"SETUP_WINDOW_SCALE", windowscale
+									) : !"a";
+                                    //togglers
+                                    auto hideGround = SETTING(bool, "HIDE_GROUND");
+                                    ImGui::Checkbox("Hide Ground", &hideGround) ? Mod::get()->setSettingValue(
+                                        "HIDE_GROUND", hideGround
+                                    ) : !"HIDE_GROUND TOGGLE CHECKBOX HERE :D";
+                                    auto hideGame = SETTING(bool, "HIDE_GAME");
+                                    ImGui::Checkbox("Hide Game", &hideGame) ? Mod::get()->setSettingValue(
+                                        "HIDE_GAME", hideGame
+                                    ) : !"HIDE_GAME TOGGLE CHECKBOX HERE :D";
+                                    //zOrder
+                                    auto zzz = SETTING(int, "BG_ZORDER");
+                                    ImGui::InputInt(
+                                        "Z Order (60 to hide icons)", &zzz
+                                    ) ? Mod::get()->setSettingValue(
+                                        "BG_ZORDER", zzz
+                                    ) : !"a";
+                                    //pos
+                                    ImGui::SeparatorText("Position");
+                                    ImGui::Button("RESET###pos") ? content->setPosition(CCPointZero) : void();
+                                    ImGui::SameLine();
+                                    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                                    float p[2] = { content->getPositionX(), content->getPositionY() };
+                                    ImGui::DragFloat2("###pos", p) ? content->setPosition({p[0],p[1]}) : void();
+                                    //scale
+                                    ImGui::SeparatorText("Scale");
+                                    if (ImGui::Button(
+                                        (SETTING(std::string, "BG_SCALE_TYPE") + "###stypesw").c_str(),
+                                        { ImGui::GetContentRegionAvail().x, 0.f}
+                                    )) {
+                                        Mod::get()->setSettingValue("BG_SCALEX", 0.f);
+                                        Mod::get()->setSettingValue("BG_SCALEY", 0.f);
+                                        auto node = getMod()->getSetting("BG_SCALE_TYPE")->createNode(10.f);
+                                        if (auto a = node->getButtonMenu()) 
+                                            if (auto b = a->getChildByType<CCMenuItemSpriteExtra*>(-1)) 
+                                                b->activate(); //right arrow button
+                                        node->commit();
+                                    };
+                                    ImGui::BeginDisabled();
+                                    ImGui::Button("Scale values below is optional and being ignored if set to 0");
+									ImGui::EndDisabled();
+									if (ImGui::Button("RESET###scale")) {
+                                        Mod::get()->setSettingValue("BG_SCALEX", 0.f);
+                                        Mod::get()->setSettingValue("BG_SCALEY", 0.f);
+                                    };
+                                    ImGui::SameLine();
+                                    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                                    float s[2] = { SETTING(float, "BG_SCALEX"), SETTING(float, "BG_SCALEY") };
+                                    if (ImGui::DragFloat2("###scale", s, 0.005f)) {
+                                        Mod::get()->setSettingValue("BG_SCALEX", s[0]);
+										Mod::get()->setSettingValue("BG_SCALEY", s[1]);
+                                    };
+                                    ImGui::SetWindowSize(ImVec2(1, 1));
                                 }
-                            }
-						}
+                                ImGui::End();
+                            };
 
                     }
                 }
@@ -164,6 +245,12 @@ class $modify(AddMenuGameLayerExt, CCSprite) {
         if (SETTING(bool, "OVERLAP_ALLGRADBG")) if (std::string(pszFileName) == "GJ_gradientBG.png") queueInMainThread(
             [rtn = Ref(rtn)] {
                 if (auto a = rtn->getParent()) {
+                    if (SETTING(bool, "HIDE_GROUND")) findFirstChildRecursive<GJGroundLayer>(
+                        a, [](GJGroundLayer* a) {
+                            a->setScale(0);
+                            return false;
+                        }
+                    );
                     auto game = MenuGameLayer::create();
                     game->setTouchEnabled(0);
                     a->insertAfter(game, rtn);

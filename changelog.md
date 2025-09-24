@@ -1,8 +1,12 @@
 # 1.1.0
+- `HIDE_GROUND` now hides grounds in other layers
 - used `geode::utils::string::pathToString`
-- default bg name is "edit_barBG_001.png" now
-- setup mode updated
+- default bg name is `edit_barBG_001.png` now
 - setup mode is enabled by default
+- setup mode window updated
+- fixed scrolling bugs
+- logo updated
+- SDK 4.8.0
 
 # 1.0.5
 - removed async gif parsing
