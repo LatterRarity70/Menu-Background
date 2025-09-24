@@ -1,3 +1,9 @@
+# 1.1.0
+- used `geode::utils::string::pathToString`
+- default bg name is "edit_barBG_001.png" now
+- setup mode updated
+- setup mode is enabled by default
+
 # 1.0.5
 - removed async gif parsing
 - bg file preload

@@ -1,21 +1,21 @@
 {
-  "geode": "4.4.0",
+  "geode": "4.8.0",
   "gd": {
     "win": "2.2074",
     "android": "2.2074",
     "mac": "2.2074",
     "ios": "2.2074"
   },
-  "version": "1.0.5",
+  "version": "1.1.0-beta.1",
   "id": "user95401.main-menu-background",
   "name": "Main Menu Background",
-  "developers": [ "user95401" ],
-  "description": "My background menu mod with support for GIFs and other extra stuff.",
+  "developers": [ "LatterRarity70" ],
+  "description": "My background menu mod with GIFs support and other extra stuff.",
   "tags": [ "interface", "utility" ],
   "links": {
     "community": "https://discord.gg/6SxAbk3bTA",
-    "homepage": "https://t.me/user95401_channel",
-    "source": "https://github.com/user95401/Menu-Background"
+    "homepage": "https://t.me/LatterRarity70",
+    "source": "https://github.com/LatterRarity70/Menu-Background"
   },
   "dependencies": {
     "user95401.gif-sprites": {
@@ -24,11 +24,11 @@
     }
   },
   "settings": {
-    "SETUP_MODE": {
+    "SETUP_MODE_ENABLED": {
       "name": "Setup Mode",
       "description": "Adds control ui to main menu.",
       "type": "bool",
-      "default": false
+      "default": true
     },
     "SETUP_WINDOW_SCALE": {
       "name": "Setup Window Scale",
@@ -46,22 +46,13 @@
     "BACKGROUND_FILE": {
       "type": "file",
       "name": "Background image file",
-      "default": "background.png",
+      "default": "edit_barBG_001.png",
       "control": {
         "dialog": "open",
         "filters": [
-          {
-            "files": [ "*.png", "*.jpg", "*.gif" ],
-            "description": "Static image or animated gif file"
-          },
-          {
-            "files": [ "*.gif" ],
-            "description": "Static animated gif file"
-          },
-          {
-            "files": [ "*.png", "*.jpg" ],
-            "description": "Static image file"
-          }
+          { "files": [ "*.png", "*.jpg", "*.gif" ] },
+          { "files": [ "*.png", "*.jpg" ] },
+          { "files": [ "*.gif" ] }
         ]
       }
     },

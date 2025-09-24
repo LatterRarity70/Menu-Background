@@ -1,13 +1,12 @@
-
-#include <Geode/Geode.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 
 using namespace geode::prelude;
 
 #define SETTING(type, key_name) Mod::get()->getSettingValue<type>(key_name)
 
-$on_mod(Loaded) {
+class ModSettingsPopup : public Popup<Mod*> {};
 
+$on_mod(Loaded) {
     //more search paths
     auto search_paths = {
         getMod()->getConfigDir().string(),
@@ -19,9 +18,9 @@ $on_mod(Loaded) {
     );
 
     //gif file preload
-    auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
-    CCSprite::create((const char*)BACKGROUND_FILE.c_str());
-
+    auto BACKGROUND_FILE = string::pathToString(SETTING(std::filesystem::path, "BACKGROUND_FILE"));
+    BACKGROUND_FILE = CCFileUtils::get()->fullPathForFilename(BACKGROUND_FILE.c_str(), 0).c_str();
+    CCSprite::create(BACKGROUND_FILE.c_str());
 }
 
 #include <Geode/modify/MenuGameLayer.hpp>
@@ -40,9 +39,10 @@ public:
         GameManager::get()->m_loadedBgID = loadedBgID;
         GameManager::get()->m_loadedGroundID = loadedGroundID;
 
-        auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
+        auto BACKGROUND_FILE = string::pathToString(SETTING(std::filesystem::path, "BACKGROUND_FILE"));
+        BACKGROUND_FILE = CCFileUtils::get()->fullPathForFilename(BACKGROUND_FILE.c_str(), 0).c_str();
 
-        CCNodeRGBA* inital_sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
+        CCNodeRGBA* inital_sprite = CCSprite::create(BACKGROUND_FILE.c_str());
 
         if (inital_sprite) {
 
@@ -57,8 +57,9 @@ public:
             auto setupSprite = [scroll, size](CCNode* sprite = nullptr)
                 {
                     scroll->m_contentLayer->removeChildByID("sprite"_spr);
-                    auto BACKGROUND_FILE = SETTING(std::filesystem::path, "BACKGROUND_FILE").u8string();
-                    if (!sprite) sprite = CCSprite::create((const char*)BACKGROUND_FILE.c_str());
+                    auto BACKGROUND_FILE = string::pathToString(SETTING(std::filesystem::path, "BACKGROUND_FILE"));
+                    BACKGROUND_FILE = CCFileUtils::get()->fullPathForFilename(BACKGROUND_FILE.c_str(), 0).c_str();
+                    if (!sprite) sprite = CCSprite::create(BACKGROUND_FILE.c_str());
                     sprite = sprite ? sprite : CCLabelBMFont::create("FAILED TO LOAD IMAGE", "bigFont.fnt");
                     if (sprite) {
                         sprite->setPosition({ size.width * 0.5f, size.height * 0.5f });
@@ -75,6 +76,8 @@ public:
             scroll->m_scrollLimitBottom = 9999;
             scroll->m_cutContent = false;
 
+            scroll->setMouseEnabled(SETTING(bool, "SETUP_MODE_ENABLED"));
+
             auto scroll_bg = CCSprite::create("groundSquare_18_001.png");//geode::createLayerBG();
             scroll_bg->setScale(9999.f);
             scroll_bg->setColor(ccBLACK);
@@ -85,7 +88,8 @@ public:
                 [scroll, scroll_bg, setupSprite, this] {
                     auto content = scroll->m_contentLayer;
 
-                    scroll->m_disableMovement = not SETTING(bool, "SETUP_MODE");
+                    scroll->m_disableMovement = not SETTING(bool, "SETUP_MODE_ENABLED");
+                    scroll->setMouseEnabled(SETTING(bool, "SETUP_MODE_ENABLED"));
 
                     if (auto a = scroll->getChildByIDRecursive("menu_top_container"_spr)) a->setScale(SETTING(float, "SETUP_WINDOW_SCALE"));
 
@@ -110,250 +114,37 @@ public:
                         if (type == "Up to WinSize") cocos::limitNodeSize(sprite, content->getContentSize(), 9999.f, 0.1f);
                     }
 
-                    if (not SETTING(bool, "SETUP_MODE")) {
+                    if (not SETTING(bool, "SETUP_MODE_ENABLED")) {
 
                         content->setPositionX(SETTING(float, "BG_POSX"));
                         content->setPositionY(SETTING(float, "BG_POSY"));
-
-                        if (auto a = scroll->getChildByIDRecursive("menu_top_container"_spr)) a->removeFromParent();
 
                     }
                     else {
 
                         Mod::get()->setSettingValue("BG_POSX", content->getPositionX());
                         Mod::get()->setSettingValue("BG_POSY", content->getPositionY());
-                        
 
-                        auto menu = scroll->getChildByIDRecursive("menu"_spr);
-                        if (!menu) {
-                            auto menu_top_container = CCNode::create();
-                            menu_top_container->setID("menu_top_container"_spr);
-                            scroll->addChildAtPosition(menu_top_container, Anchor::TopLeft, {}, 0);
-
-                            menu = CCMenu::create();
-                            menu->setID("menu"_spr);
-                            menu->setPosition(CCPointZero + CCPointMake(112.f, 0));
-                            menu_top_container->addChild(menu);
-
-                            auto menu_bg = CCSprite::create("groundSquare_18_001.png");
-                            menu_bg->setAnchorPoint(CCPointMake(0.f, 0.5f));
-                            menu_bg->setPosition(CCPointMake(39.f, 0.f));
-                            menu_bg->setScaleX(1.675f);
-                            menu_bg->setScaleY(1.325f);
-                            menu_bg->setOpacity(90);
-                            menu_bg->setColor(ccBLACK);
-                            menu_bg->setID("menu_bg"_spr);
-                            menu_top_container->addChild(menu_bg, -10);
-
-                            auto btnImage = [](std::string text) {
-                                auto bs = ButtonSprite::create(text.c_str());
-                                bs->setCascadeColorEnabled(1);
-                                bs->m_label->setFntFile("chatFont.fnt");
-                                bs->m_BGSprite->setSpriteFrame(CCSprite::create("groundSquare_18_001.png")->displayFrame());
-                                bs->m_BGSprite->runAction(CCRepeatForever::create(CCTintTo::create(0.f, 0, 0, 0)));
-                                bs->m_BGSprite->setOpacity(90);
-                                bs->m_BGSprite->setContentSize(bs->m_label->getContentSize() + CCSizeMake(3, 3));
-                                bs->setContentSize(bs->m_BGSprite->getContentSize());
-                                bs->m_BGSprite->setPosition(bs->getContentSize() / 2);
-                                bs->m_label->setPosition(bs->getContentSize() / 2);
-                                bs->setScale(0.6f);
-                                bs->setID("btn-image."_spr + text);
-                                return bs;
-                                };
-                            auto btn = [](CCMenuItemSpriteExtra* item, bool repeated = false)
-                                {
-                                    item->setCascadeColorEnabled(1);
-                                    item->m_colorEnabled = (1);
-                                    item->m_scaleMultiplier = 0.9;
-                                    //item->m_animationEnabled = (0);
-                                    if (repeated) {
-                                        item->getNormalImage()->runAction(CCRepeatForever::create(CCSpawn::create(CallFuncExt::create(
-                                            [item] () {
-                                                //log::error("{}", item);
-                                                if (item->m_bSelected) {
-                                                    item->setTag(item->getTag() + 1);
-                                                    (item->m_pListener->*item->m_pfnSelector)(item);
-                                                }
-                                                else item->setTag(0);
-                                            }
-                                        ), CCDelayTime::create(0.05f), nullptr)));
+                        if (auto sc = CCScene::get()) if (sc->getChildByType<CCLayer>(0)) {
+                            static Ref<Popup<Mod*>> popup;
+                            if (!sc->getChildByType<ModSettingsPopup>(0)) popup = openSettingsPopup(
+                                getMod(), true //openSettingsPopup
+                            );
+                            else if (popup and popup->isRunning()) {
+                                popup->setOpacity(0);
+                                popup->setTouchEnabled(false);
+                                popup->setScale(SETTING(float, "SETUP_WINDOW_SCALE")); //SETUP_WINDOW_SCALE
+                                if (auto layer = popup->m_mainLayer) {
+                                    if (Ref a = layer->getChildByType<CCScale9Sprite>(-1)) {
+                                        a->setOpacity(125);
+                                        a->setColor(ccBLACK);
                                     }
-                                    item->setID("btn."_spr + string::replace(item->getNormalImage()->getID(), ""_spr, ""));
-                                    return item;
-                                };
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage("   HIDE MENU   "), [this](CCMenuItemSpriteExtra* item) {
-
-                                    if (this->getPositionX()) {
-                                        if (auto a = item->getNormalImage()->getChildByType<CCLabelBMFont>(-1))
-                                            a->setString("   HIDE MENU   ");
-                                        this->getParent()->setPositionX(this->getParent()->getPositionX() - this->getParent()->getContentWidth() * 3);
-                                        this->setPositionX(this->getPositionX() + this->getContentWidth() * 3);
+                                    if (Ref a = layer->getChildByType<ListBorders>(-1)) {
+                                        a->setVisible(0);
                                     }
-                                    else {
-                                        if (auto a = item->getNormalImage()->getChildByType<CCLabelBMFont>(-1))
-                                            a->setString("SHOW MENU");
-                                        this->getParent()->setPositionX(this->getParent()->getContentWidth() * 3);
-                                        this->setPositionX(this->getContentWidth() * -3);
-                                    };
                                 }
-                            )), Anchor::BottomLeft, { -34.f, -10.f }, 0);
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage("       RESET       "), [content](CCMenuItemSpriteExtra* item) {
-                                    content->setPosition(CCPointZero);
-                                }
-                            )), Anchor::BottomLeft, { -34.f, -22.f }, 0);
-                            
-                            //BG_SCALE
-                            {
-
-                                //x
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage("<"), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_SCALEX", SETTING(float, "BG_SCALEX") - 0.0001 - ((double)item->getTag() / 10000)
-                                        );
-                                    }), true), Anchor::BottomLeft, { (-60.f - 2.0f), -34.f }, 0);
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage(" x "), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue("BG_SCALEX", 0.0);
-                                    }
-                                )), Anchor::BottomLeft, { (-49.f - 2.0f), -34.f }, 0);
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage(">"), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_SCALEX", SETTING(float, "BG_SCALEX") + 0.0001 + ((double)item->getTag() / 10000)
-                                        );
-                                    }), true), Anchor::BottomLeft, { (-38.f - 2.0f), -34.f }, 0);
-
-                                //y
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage("<"), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_SCALEY", SETTING(float, "BG_SCALEY") - 0.0001 - ((double)item->getTag() / 10000)
-                                        );
-                                    }), true), Anchor::BottomLeft, { (-60.f - 2.0f) + (60.f - 26.f), -34.f }, 0);
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage(" y "), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue("BG_SCALEY", 0.0);
-                                    }
-                                )), Anchor::BottomLeft, { (-49.f - 2.0f) + (60.f - 26.f), -34.f }, 0);
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage(">"), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_SCALEY", SETTING(float, "BG_SCALEY") + 0.0001 + ((double)item->getTag() / 10000)
-                                        );
-                                    }), true), Anchor::BottomLeft, { (-38.f - 2.0f) + (60.f - 26.f), -34.f }, 0);
-                            };
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage("      SWITCH      "), [content](CCMenuItemSpriteExtra* item) {
-                                    Mod::get()->setSettingValue("BG_SCALEX", 0.f);
-                                    Mod::get()->setSettingValue("BG_SCALEY", 0.f);
-                                    auto setting = getMod()->getSetting("BG_SCALE_TYPE");
-                                    auto node = setting->createNode(10.f);
-                                    if (auto a = node->getButtonMenu()->getChildByType<CCMenuItemSpriteExtra*>(-1)) a->activate();
-                                    node->commit();
-                                }
-                            )), Anchor::BottomLeft, { -34.f, -46.000 }, 0);
-
-                            //BG_ZORDER
-                            {
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage("-          "), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_ZORDER", SETTING(int, "BG_ZORDER") - 1 - (int)(item->getTag() / 10)
-                                        );
-                                    }), true), Anchor::BottomLeft, { -51.f, -58.000f }, 0);
-
-                                menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                    btnImage("          +"), [](CCMenuItemSpriteExtra* item) {
-                                        Mod::get()->setSettingValue(
-                                            "BG_ZORDER", SETTING(int, "BG_ZORDER") + 1 + (int)(item->getTag() / 10)
-                                        );
-                                    }), true), Anchor::BottomLeft, { -17.f, -58.000f }, 0);
-                            };
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage(" TOGGLE HIDE_GROUND "), [scroll](CCMenuItemSpriteExtra* item) {
-                                    Mod::get()->setSettingValue("HIDE_GROUND", !SETTING(bool, "HIDE_GROUND"));
-                                }
-                            )), Anchor::BottomLeft, { -14.000f, -72.000f }, 0);
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage(" TOGGLE HIDE_GAME "), [scroll](CCMenuItemSpriteExtra* item) {
-                                    Mod::get()->setSettingValue("HIDE_GAME", !SETTING(bool, "HIDE_GAME"));
-                                }
-                            )), Anchor::BottomLeft, { 91.000f, -72.000f }, 0);
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage("SETTINGS"), [scroll](CCMenuItemSpriteExtra* item) {
-                                    openSettingsPopup(getMod(), 1);
-                                }
-                            )), Anchor::BottomLeft, { 115.500f, -59.00f }, 0);
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage(" X "), [scroll](CCMenuItemSpriteExtra* item) {
-                                    Mod::get()->setSettingValue("SETUP_MODE", !SETTING(bool, "SETUP_MODE"));
-                                }
-                            )), Anchor::BottomLeft, { 130.000f, -10.000f }, 0);
-
-                            auto apply_file_btn = [btn, btnImage, setupSprite](SettingNodeV3* node)
-                                {
-                                    return btn(CCMenuItemExt::createSpriteExtra(
-                                        btnImage("APPLY FILE"), [node, setupSprite](CCMenuItemSpriteExtra* item) {
-                                            node->commit();
-                                            node->removeFromParent();
-                                            item->removeFromParent();
-                                            setupSprite();
-                                        }
-                                    ));
-                                };
-
-                            menu->addChildAtPosition(btn(CCMenuItemExt::createSpriteExtra(
-                                btnImage(" + "), [menu, apply_file_btn](CCMenuItemSpriteExtra* item) {
-
-                                    auto setting = getMod()->getSetting("BACKGROUND_FILE");
-                                    auto node = setting->createNode(310.f);
-                                    if (auto a = node->getButtonMenu()->getChildByType<CCMenuItemSpriteExtra*>(-1)) a->activate();
-
-                                    menu->removeChildByID("btn.btn-image.APPLY FILE"_spr);
-                                    menu->addChildAtPosition(node, Anchor::BottomLeft, { 9999.000f, 9999.000f }, 0);
-                                    menu->addChildAtPosition(apply_file_btn(node), Anchor::BottomLeft, { 98.000f, -11.000f}, 0);
-                                }
-                            )), Anchor::BottomLeft, { 130.000f, -22.000f }, 0);
-
-                        };
-
-                        menu->removeChildByID("inflbl");
-
-                        auto inflbl = CCLabelBMFont::create(fmt::format(
-                            """" "SETUP_MODE"
-                            "\n" "BG_POS: {:0.4}, {:0.4}"
-                            "\n" "BG_SCALE: {:0.4}, {:0.4}"
-                            "\n" "or {}"
-                            "\n" "BG_ZORDER: {}"
-                            , SETTING(float, "BG_POSX")
-                            , SETTING(float, "BG_POSY")
-                            , SETTING(float, "BG_SCALEX")
-                            , SETTING(float, "BG_SCALEY")
-                            , SETTING(std::string, "BG_SCALE_TYPE")
-                            , SETTING(int, "BG_ZORDER")
-                        ).c_str(), "chatFont.fnt");
-                        inflbl->setAlignment(CCTextAlignment::kCCTextAlignmentLeft);
-                        inflbl->setAnchorPoint({ 0.0f, 1.060f });
-                        inflbl->setScale(0.745f);
-
-                        inflbl->setID("inflbl");
-                        menu->addChild(inflbl);
+                            }
+						}
 
                     }
                 }
