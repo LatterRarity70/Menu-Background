@@ -150,7 +150,7 @@ public:
                                     if (!enabled) getMod()->setSettingValue("SETUP_MODE_ENABLED", false);
                                     //btns
                                     if (ImGui::Button(
-                                        ref->getPositionX() ? "Hide Menu" : "Show Menu"
+                                        ref->getPositionX() ? "Show Menu" : "Hide Menu"
                                     )) if (Ref parent = ref->getParent()) {
                                         if (ref->getPositionX()) {
                                             parent->setPositionX(parent->getPositionX() - parent->getContentWidth() * 3);
