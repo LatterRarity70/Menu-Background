@@ -1,3 +1,6 @@
+# 1.1.1
+- added warns for invalid file selections
+
 # 1.1.0
 - `HIDE_GROUND` now hides grounds in other layers
 - used `geode::utils::string::pathToString`
