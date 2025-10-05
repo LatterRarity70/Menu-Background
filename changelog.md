@@ -1,3 +1,6 @@
+# 1.1.2
+- avoid `std::filesystem::path::string` usage on lines 17, 18, and 19... 
+
 # 1.1.1
 - added warns for invalid file selections
 
