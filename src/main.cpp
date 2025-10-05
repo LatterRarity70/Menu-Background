@@ -13,14 +13,11 @@ $on_mod(Loaded) {
     ImGuiCocos::get().draw([] { if (NextDraw) NextDraw(); NextDraw = nullptr; });
 
     //more search paths
-    auto search_paths = {
-        getMod()->getConfigDir().string(),
-        getMod()->getSaveDir().string(),
-        getMod()->getTempDir().string()
-    };
-    for (auto entry : search_paths) CCFileUtils::get()->addPriorityPath(
-        entry.c_str()
-    );
+    for (auto path : {
+        string::pathToString(getMod()->getConfigDir()),
+        string::pathToString(getMod()->getSaveDir()),
+        string::pathToString(getMod()->getTempDir())
+    }) CCFileUtils::get()->addPriorityPath(path.c_str());
 
     //gif file preload
     auto BACKGROUND_FILE = string::pathToString(SETTING(std::filesystem::path, "BACKGROUND_FILE"));
@@ -88,7 +85,7 @@ public:
                     auto BACKGROUND_FILE = string::pathToString(value);
                     if (!CCFileUtils::get()->getFileData(BACKGROUND_FILE.c_str(), "rb", &aaw)) {
                         for (auto c : BACKGROUND_FILE) if (!string::contains(
-                            R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!น;%:?*()_+-=.,\/|"'@#$^&{}[])"
+                            R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!ยน;%:?*()_+-=.,\/|"'@#$^&{}[])"
                             , c
                         )) {
                             auto e = createQuickPopup(
@@ -98,7 +95,7 @@ public:
                             );
                             auto list = std::string();
                             for (auto c : BACKGROUND_FILE) if (!string::contains(
-                                R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!น;%:?*()_+-=.,\/|"'@#$^&{}[])"
+                                R"(0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!ยน;%:?*()_+-=.,\/|"'@#$^&{}[])"
                                 , c
                             )) list += c;
                             list += "\n \n \n \n ";
